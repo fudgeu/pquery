@@ -1,0 +1,12 @@
+package dev.fudgeu.pquery.parser
+
+enum class Token {
+    BOOLEAN_RESOLVABLE,
+    NUMBER_RESOLVABLE,
+    STRING_RESOLVABLE,
+    LOGICAL_OPERATOR,
+    COMPARISON_OPERATOR,
+    MATH_OPERATOR,
+    LEFT_PARENTHESIS,
+    RIGHT_PARENTHESIS,
+}
