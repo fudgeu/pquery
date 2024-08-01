@@ -13,7 +13,7 @@ class PluginBuilder(val name: String) {
     private val logicalConstructors: MutableMap<String, LogicalOperatorConstructor> = mutableMapOf()
     private val comparisonConstructors: MutableMap<String, ComparisonOperatorConstructor> = mutableMapOf()
     private val mathConstructors: MutableMap<String, MathOperatorConstructor> = mutableMapOf()
-    private val variables: MutableMap<String, PluginPath> = mutableMapOf()
+    private val variables: MutableMap<String, MutablePluginPath> = mutableMapOf()
 
     fun registerLogicalOperator(operator: String, constructor: LogicalOperatorConstructor) {
         logicalConstructors[operator] = constructor
@@ -57,25 +57,27 @@ class PluginBuilder(val name: String) {
         pluginPath.stringValue = value
     }
 
-    fun registerPath() {
-
-    }
-
     fun build(): Plugin {
-        return Plugin()
+        return Plugin(
+            name,
+            logicalConstructors,
+            comparisonConstructors,
+            mathConstructors,
+            variables.mapValues { it.value.finalize() }
+        )
     }
 
     // Will grab the plugin path specified, creating it (recursively) if it does not exist
-    private fun getPath(path: String): PluginPath {
-        val splitPath = path.split('.')
+    private fun getPath(path: String): MutablePluginPath {
+        val splitPath = path.split('.').toMutableList()
         if (splitPath.getOrNull(0) == name) splitPath.removeFirst()
         if (splitPath.isEmpty()) throw Throwable("Fix later")
 
-        var curPath: PluginPath? = null
-        var curPathChildren = variables
+        var curPath: MutablePluginPath? = null
+        var curPathChildren: MutableMap<String, MutablePluginPath>? = variables
         for (pathPart in splitPath) {
-            curPath = curPathChildren.getOrPut(pathPart) { PluginPath() }
-            curPathChildren = curPath.subPaths
+            curPath = curPathChildren?.getOrPut(pathPart) { MutablePluginPath() }
+            curPathChildren = curPath?.subPaths
         }
 
         if (curPath == null) throw Throwable("Technically impossible")

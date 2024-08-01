@@ -9,6 +9,6 @@ data class PluginPath(
     val booleanValue: BooleanResolvable? = null,
     val numberValue: NumberResolvable? = null,
     val stringValue: StringResolvable? = null,
-    val resolvableType: ResolvableType?,
-    val subPaths: Map<String, PluginPath>,
+    val resolvableType: ResolvableType? = null,
+    val subPaths: Map<String, PluginPath>? = mapOf(),
 )
