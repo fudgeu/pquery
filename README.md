@@ -81,9 +81,8 @@ println("Does 1 + 2 = 3? The answer is: $result")
 
 Some essential features that will be added soon are:
 
-- PluginBuilder, which simplifies the process of creating a plugin
-- Functions (such as those for finding the lengths of strings)
 - Conditional chaining (allowing for expressions like `myVar == 'test1' | 'test2' | 'test3'`)
 
 More down the road:
-- Support for lists (lists of booleans, numbers, or strings, and operators for using them, such as `'example' in myListOfStrings`)
+- Functions (such as those for finding the lengths of strings)
+- Simple plugin creation from a JSON file
