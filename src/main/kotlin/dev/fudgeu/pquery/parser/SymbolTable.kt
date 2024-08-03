@@ -1,9 +1,6 @@
 package dev.fudgeu.pquery.parser
 
-import dev.fudgeu.pquery.resolvables.basic.BooleanResolvable
-import dev.fudgeu.pquery.resolvables.basic.NumberResolvable
 import dev.fudgeu.pquery.resolvables.basic.Resolvable
-import dev.fudgeu.pquery.resolvables.basic.StringResolvable
 import dev.fudgeu.pquery.resolvables.comparison.ComparisonOperatorConstructor
 import dev.fudgeu.pquery.resolvables.logical.LogicalOperatorConstructor
 import dev.fudgeu.pquery.resolvables.math.MathOperatorConstructor
