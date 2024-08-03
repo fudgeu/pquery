@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "dev.fudgeu"
-version = "0.1-SNAPSHOT"
+version = "0.1.1b-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -19,4 +19,10 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(17)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") { from(components["java"]) }
+    }
 }

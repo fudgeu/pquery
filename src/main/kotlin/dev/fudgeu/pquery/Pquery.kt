@@ -5,8 +5,10 @@ import dev.fudgeu.pquery.parser.Tokenizer
 import dev.fudgeu.pquery.plugin.Plugin
 import dev.fudgeu.pquery.plugin.Plugins
 import dev.fudgeu.pquery.resolvables.basic.BooleanResolvable
+import dev.fudgeu.pquery.resolvables.basic.Resolvable
 import dev.fudgeu.pquery.resolvables.comparison.EqualsResolver
 import dev.fudgeu.pquery.resolvables.comparison.GreaterThanResolver
+import dev.fudgeu.pquery.resolvables.comparison.InListResolver
 import dev.fudgeu.pquery.resolvables.comparison.NotEqualsResolver
 import dev.fudgeu.pquery.resolvables.logical.LogicalAndResolver
 import dev.fudgeu.pquery.resolvables.logical.LogicalOrResolver
@@ -22,7 +24,8 @@ class Pquery(plugins: List<Plugin> = listOf()) {
             comparisonOperators = mapOf(
                 "==" to EqualsResolver.Constructor(),
                 "!=" to NotEqualsResolver.Constructor(),
-                ">" to GreaterThanResolver.Constructor()
+                ">" to GreaterThanResolver.Constructor(),
+                "in" to InListResolver.Constructor(),
             ),
             logicalOperators = mapOf(
                 "&&" to LogicalAndResolver.Constructor(),
@@ -45,7 +48,7 @@ class Pquery(plugins: List<Plugin> = listOf()) {
         tokenizer = Tokenizer(registeredPlugins)
     }
 
-    fun compile(query: String): Result<BooleanResolvable> {
+    fun compile(query: String): Result<Resolvable<Boolean>> {
         val tokenizedQuery = tokenizer.tokenize(query)
             .getOrElse { return Result.failure(it) }
         return Parser(tokenizedQuery, registeredPlugins).parse()

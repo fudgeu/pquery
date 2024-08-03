@@ -1,9 +1,8 @@
 package dev.fudgeu.pquery.plugin
 
-import dev.fudgeu.pquery.resolvables.basic.BooleanResolvable
-import dev.fudgeu.pquery.resolvables.basic.NumberResolvable
-import dev.fudgeu.pquery.resolvables.basic.ResolvableType
-import dev.fudgeu.pquery.resolvables.basic.StringResolvable
+import dev.fudgeu.pquery.resolvables.basic.*
+import dev.fudgeu.pquery.resolvables.basic.list.NumberListResolvable
+import dev.fudgeu.pquery.resolvables.basic.list.StringListResolvable
 import dev.fudgeu.pquery.resolvables.comparison.ComparisonOperatorConstructor
 import dev.fudgeu.pquery.resolvables.logical.LogicalOperatorConstructor
 import dev.fudgeu.pquery.resolvables.math.MathOperatorConstructor
@@ -55,6 +54,26 @@ class PluginBuilder(val name: String) {
         val pluginPath = getPath(path)
         pluginPath.resolvableType = ResolvableType.STRING
         pluginPath.stringValue = value
+    }
+
+    fun registerStringList(path: String, value: List<String>) {
+        registerStringList(path, StringListResolvable.of(value))
+    }
+
+    fun registerStringList(path: String, value: Resolvable<List<String>>) {
+        val pluginPath = getPath(path)
+        pluginPath.resolvableType = ResolvableType.STRING_LIST
+        pluginPath.listValue = value
+    }
+
+    fun registerNumberList(path: String, value: List<Double>) {
+        registerNumberList(path, NumberListResolvable.of(value))
+    }
+
+    fun registerNumberList(path: String, value: Resolvable<List<Double>>) {
+        val pluginPath = getPath(path)
+        pluginPath.resolvableType = ResolvableType.NUMBER_LIST
+        pluginPath.listValue = value
     }
 
     fun build(): Plugin {
