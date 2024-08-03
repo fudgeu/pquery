@@ -2,10 +2,7 @@ package dev.fudgeu.pquery.parser
 
 import dev.fudgeu.pquery.errors.InvalidToken
 import dev.fudgeu.pquery.plugin.Plugins
-import dev.fudgeu.pquery.resolvables.basic.BooleanResolvable
-import dev.fudgeu.pquery.resolvables.basic.NumberResolvable
-import dev.fudgeu.pquery.resolvables.basic.ResolvableType
-import dev.fudgeu.pquery.resolvables.basic.StringResolvable
+import dev.fudgeu.pquery.resolvables.basic.*
 import java.util.regex.Pattern
 
 class Tokenizer(
@@ -40,6 +37,27 @@ class Tokenizer(
                 continue
             }
 
+            // Check if square brackets
+            if (workingQuery[0] == '[') {
+                workingQuery = workingQuery.drop(1)
+                tokens.add(Lexeme(Token.LEFT_SQUARE_BRACKET, at = at))
+                at++
+                continue
+            } else if (workingQuery[0] == ']') {
+                workingQuery = workingQuery.drop(1)
+                tokens.add(Lexeme(Token.RIGHT_SQUARE_BRACKET, at = at))
+                at++
+                continue
+            }
+
+            // Check if comma
+            if (workingQuery[0] == ',') {
+                workingQuery = workingQuery.drop(1)
+                tokens.add(Lexeme(Token.COMMA, at = at))
+                at++
+                continue
+            }
+
             // Check string literals
             if (workingQuery[0] == '\'' || workingQuery[0] == '"') {
                 val quoteCharacter = workingQuery[0]
@@ -58,7 +76,7 @@ class Tokenizer(
             }
 
             // For remainder of possible tokens, just grab all characters until a whitespace is hit
-            val token = workingQuery.takeWhile { !it.isWhitespace() && it != ')' } // TODO need to detect more than just whitespace
+            val token = workingQuery.takeWhile { !it.isWhitespace() && it != ')' && it != ',' && it != ']'} // TODO need to detect more than just whitespace
             workingQuery = workingQuery.substring(token.length)
 
             // Check boolean literals
@@ -115,16 +133,24 @@ class Tokenizer(
             if (possibleVariable != null) {
                 when (possibleVariable.type) {
                     ResolvableType.BOOLEAN -> {
-                        val id = symbolTable.addBooleanResolvable(possibleVariable.boolean!!)
+                        val id = symbolTable.addBooleanResolvable(possibleVariable.value as Resolvable<Boolean>)
                         tokens.add(Lexeme(Token.BOOLEAN_RESOLVABLE, id, at))
                     }
                     ResolvableType.NUMBER -> {
-                        val id = symbolTable.addNumberResolvable(possibleVariable.number!!)
+                        val id = symbolTable.addNumberResolvable(possibleVariable.value as Resolvable<Double>)
                         tokens.add(Lexeme(Token.NUMBER_RESOLVABLE, id, at))
                     }
                     ResolvableType.STRING -> {
-                        val id = symbolTable.addStringResolvable(possibleVariable.string!!)
+                        val id = symbolTable.addStringResolvable(possibleVariable.value as Resolvable<String>)
                         tokens.add(Lexeme(Token.STRING_RESOLVABLE, id, at))
+                    }
+                    ResolvableType.STRING_LIST -> {
+                        val id = symbolTable.addStringListResolvable(possibleVariable.value as Resolvable<List<String>>)
+                        tokens.add(Lexeme(Token.STRING_LIST_RESOLVABLE, id, at))
+                    }
+                    ResolvableType.NUMBER_LIST -> {
+                        val id = symbolTable.addNumberListResolvable(possibleVariable.value as Resolvable<List<Double>>)
+                        tokens.add(Lexeme(Token.NUMBER_LIST_RESOLVABLE, id, at))
                     }
                 }
                 at += token.length

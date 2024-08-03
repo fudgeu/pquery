@@ -1,7 +1,7 @@
 package dev.fudgeu.pquery.resolvables.logical
 
-import dev.fudgeu.pquery.resolvables.basic.BooleanResolvable
+import dev.fudgeu.pquery.resolvables.basic.Resolvable
 
 interface LogicalOperatorConstructor {
-    fun construct(left: BooleanResolvable, right: BooleanResolvable): BooleanResolvable
+    fun construct(left: Resolvable<Boolean>, right: Resolvable<Boolean>): Resolvable<Boolean>
 }

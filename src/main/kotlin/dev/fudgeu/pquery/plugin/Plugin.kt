@@ -1,6 +1,8 @@
 package dev.fudgeu.pquery.plugin
 
 import dev.fudgeu.pquery.resolvables.basic.*
+import dev.fudgeu.pquery.resolvables.basic.list.NumberListResolvable
+import dev.fudgeu.pquery.resolvables.basic.list.StringListResolvable
 import dev.fudgeu.pquery.resolvables.comparison.ComparisonOperatorConstructor
 import dev.fudgeu.pquery.resolvables.logical.LogicalOperatorConstructor
 import dev.fudgeu.pquery.resolvables.math.MathOperatorConstructor
@@ -16,6 +18,8 @@ class Plugin(
     private val booleanVars: Map<String, BooleanResolvable>
     private val numberVars: Map<String, NumberResolvable>
     private val stringVars: Map<String, StringResolvable>
+    private val stringListVars: Map<String, Resolvable<List<String>>>
+    private val numberListVars: Map<String, Resolvable<List<Double>>>
 
     init {
         // Compile variables into a few hashmaps
@@ -23,12 +27,15 @@ class Plugin(
         val bools = mutableMapOf<String, BooleanResolvable>()
         val numbers = mutableMapOf<String, NumberResolvable>()
         val strings = mutableMapOf<String, StringResolvable>()
+        val stringLists = mutableMapOf<String, Resolvable<List<String>>>()
+        val numberLists = mutableMapOf<String, Resolvable<List<Double>>>()
 
-        val queue = ArrayDeque<Pair<String, Map<String, PluginPath>>>()
+        val queue = ArrayDeque<Pair<String, Map<String, PluginPath>?>>()
         queue.add(Pair(name, variables))
         while (queue.isNotEmpty()) {
             val thisPath = queue.removeFirst()
-            for ((key, value) in thisPath.second) {
+            val childPaths = thisPath.second ?: continue
+            for ((key, value) in childPaths) {
                 val absolutePath = thisPath.first.plus(".$key")
                 if (value.resolvableType != null) types[absolutePath] = value.resolvableType
 
@@ -40,6 +47,10 @@ class Plugin(
                         numbers[absolutePath] = value.numberValue ?: NumberResolvable.of(0)
                     ResolvableType.STRING ->
                         strings[absolutePath] = value.stringValue ?: StringResolvable.of("")
+                    ResolvableType.STRING_LIST ->
+                        stringLists[absolutePath] = value.getStringList() ?: StringListResolvable.of(emptyList())
+                    ResolvableType.NUMBER_LIST ->
+                        numberLists[absolutePath] = value.getNumberList() ?: NumberListResolvable.of(emptyList())
                     null -> {}
                 }
 
@@ -52,6 +63,8 @@ class Plugin(
         booleanVars = bools
         numberVars = numbers
         stringVars = strings
+        stringListVars = stringLists
+        numberListVars = numberLists
     }
     // Helper function
     fun isValidLogicalOperator(operator: String): Boolean {
@@ -79,21 +92,33 @@ class Plugin(
     }
 
     fun getNumberVar(fullPath: String): NumberResolvable? {
-        return getNumberVar(fullPath)
+        return numberVars[fullPath]
     }
 
     fun getStringVar(fullPath: String): StringResolvable? {
-        return getStringVar(fullPath)
+        return stringVars[fullPath]
+    }
+
+    fun getStringListVar(fullPath: String): Resolvable<List<String>>? {
+        return stringListVars[fullPath]
+    }
+
+    fun getNumberListVar(fullPath: String): Resolvable<List<Double>>? {
+        return numberListVars[fullPath]
     }
 
     fun getVar(fullPath: String): ResolvableResult? {
         return when (variableTypes[fullPath]) {
             ResolvableType.BOOLEAN ->
-                booleanVars[fullPath]?.let { ResolvableResult(ResolvableType.BOOLEAN, boolean = it) }
+                booleanVars[fullPath]?.let { ResolvableResult.of(it) }
             ResolvableType.NUMBER ->
-                numberVars[fullPath]?.let { ResolvableResult(ResolvableType.NUMBER, number = it) }
+                numberVars[fullPath]?.let { ResolvableResult.of(it) }
             ResolvableType.STRING ->
-                stringVars[fullPath]?.let { ResolvableResult(ResolvableType.STRING, string = it) }
+                stringVars[fullPath]?.let { ResolvableResult.of(it) }
+            ResolvableType.STRING_LIST ->
+                stringListVars[fullPath]?.let { ResolvableResult.of(it) }
+            ResolvableType.NUMBER_LIST ->
+                numberListVars[fullPath]?.let { ResolvableResult.of(it) }
             null -> null
         }
     }
