@@ -1,5 +1,8 @@
 package dev.fudgeu.pquery.plugin
 
+import com.google.gson.JsonElement
+import com.google.gson.JsonParser
+import dev.fudgeu.pquery.errors.PluginBuilderError
 import dev.fudgeu.pquery.resolvables.basic.*
 import dev.fudgeu.pquery.resolvables.basic.list.NumberListResolvable
 import dev.fudgeu.pquery.resolvables.basic.list.StringListResolvable
@@ -84,6 +87,82 @@ class PluginBuilder(val name: String) {
             mathConstructors,
             variables.mapValues { it.value.finalize() }
         )
+    }
+
+    companion object {
+        fun fromJson(rawJson: String): PluginBuilder {
+            // Read JSON
+            val rootObj = JsonParser.parseString(rawJson).asJsonObject
+
+            // Initialize plugin builder
+            val plugin = PluginBuilder(rootObj.get("name").asString)
+
+            // Build list of variables
+            val initialItems = rootObj.get("variables").asJsonObject.asMap()
+            val queue = ArrayDeque<Pair<String, JsonElement>>()
+            queue.addAll(initialItems.map { Pair(it.key, it.value) }.reversed() )
+            while (queue.isNotEmpty()) {
+                val (path, value) = queue.removeLast() // Go DFS instead of BFS
+
+                // Proceed down list if object
+                if (value.isJsonObject) {
+                    val newItems = value.asJsonObject.asMap()
+                        .map { Pair("$path.${it.key}", it.value) }
+                        .reversed()
+                    queue.addAll(newItems)
+                    continue
+                }
+
+                // Process if list
+                if(value.isJsonArray) {
+                    val list = value.asJsonArray.asList()
+
+                    // Ensure all list elements are the same type, add it to a list
+                    val processedList = mutableListOf<Any>()
+                    var listType: ResolvableType? = null
+                    for (item in list) {
+                        val primItem = item.asJsonPrimitive
+                        val type = if (primItem.isNumber) ResolvableType.NUMBER
+                            else if (primItem.isString) ResolvableType.STRING
+                            else throw PluginBuilderError("Found invalid list item - all list items must be either as string or number.")
+
+                        if (listType == null) {
+                            listType = type
+                        } else if (type != listType){
+                            throw PluginBuilderError("Found inconsistent list item - all list items must be of the same type.")
+                        }
+
+                        processedList.add(item)
+                    }
+
+                    // Register list in plugin
+                    if (listType == ResolvableType.STRING)
+                        plugin.registerStringList(path, processedList as List<String>)
+                    else if (listType == ResolvableType.NUMBER)
+                        plugin.registerNumberList(path, processedList as List<Double>)
+
+                    continue
+                }
+
+                // Add primitive
+                val fixedPath = if (path.endsWith("..")) { // Catch "." self values in trees
+                    path.substring(0, path.length - 2)
+                } else path
+
+                val primObj = value.asJsonPrimitive
+                if (primObj.isString) {
+                    plugin.registerString(fixedPath, primObj.asString)
+                } else if (primObj.isNumber) {
+                    plugin.registerNumber(fixedPath, primObj.asDouble)
+                } else if (primObj.isBoolean) {
+                    plugin.registerBoolean(fixedPath, primObj.asBoolean)
+                } else {
+                    throw PluginBuilderError("Unsupported JSON element type at $fixedPath (${primObj})")
+                }
+            }
+
+            return plugin
+        }
     }
 
     // Will grab the plugin path specified, creating it (recursively) if it does not exist

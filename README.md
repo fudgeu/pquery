@@ -85,4 +85,3 @@ Some essential features that will be added soon are:
 
 More down the road:
 - Functions (such as those for finding the lengths of strings)
-- Simple plugin creation from a JSON file
