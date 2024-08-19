@@ -9,6 +9,7 @@ import dev.fudgeu.pquery.resolvables.basic.ResolvableResult
 import dev.fudgeu.pquery.resolvables.basic.ResolvableType
 import dev.fudgeu.pquery.resolvables.basic.list.NumberListResolvable
 import dev.fudgeu.pquery.resolvables.basic.list.StringListResolvable
+import dev.fudgeu.pquery.resolvables.comparison.ComparisonOperatorConstructor
 
 class Parser(
     val tokenizedQuery: TokenizedQuery,
@@ -296,8 +297,54 @@ class Parser(
                     )
                 )
             val result = constructor.construct(left, right)
-
             index += 3
+
+            // Check for comparison chain
+            // TODO figure out if it shoule actually be called conditional or comparison chain
+            while (true) {
+                val comparisonChainOperator = workingQuery.getOrNull(index)
+                if (comparisonChainOperator?.token == Token.CONDITIONAL_CHAIN) {
+                    val chainSymbol1 = workingQuery.getOrNull(index + 1)
+                    val chainSymbol2 = workingQuery.getOrNull(index + 2)
+                    if (chainSymbol1 == null) return Result.failure(SyntaxError(
+                        "Expected resolvable symbol after start of conditional chain",
+                        comparisonChainOperator.at
+                    ))
+
+                    var chainComparisonConstructor: ComparisonOperatorConstructor? = constructor
+                    var chainRightResolvable = getResolvable(chainSymbol1).getOrNull()
+                    var isUniqueComparison = false
+
+                    // Handle case where additional comparison operator is present
+                    if (chainSymbol1.token == Token.COMPARISON_OPERATOR) {
+                        if (chainSymbol2 == null) return Result.failure(SyntaxError(
+                            "Expected resolvable symbol after comparison operator in comparison chain",
+                            chainSymbol1.at
+                        ))
+                        chainComparisonConstructor = workingSymbolTable.getComparisonOperator(chainSymbol1.symbolId)
+                        chainRightResolvable = getResolvable(chainSymbol2).getOrNull()
+                        isUniqueComparison = true
+                    }
+
+                    if (chainComparisonConstructor == null) return Result.failure(SyntaxError(
+                        "Unknown _ comparison operator",
+                        chainSymbol1.at
+                    ))
+                    if (chainRightResolvable == null) return Result.failure(SyntaxError(
+                        "Unknown resolvable",
+                        if (isUniqueComparison) chainSymbol2?.at ?: 0 else chainSymbol1.at
+                    ))
+
+                    // Check if chain is valid
+                    if (!chainComparisonConstructor.isValidPairing(leftType, chainRightResolvable.type)) {
+                        return Result.failure(SyntaxError(
+                            "Comparator does not support this combination of resolvables",
+                            if (isUniqueComparison) chainSymbol1.at else lexeme2.at
+                        ))
+                    }
+                }
+            }
+
             return Result.success(ResolvableResult.of(result))
         }
         else {
