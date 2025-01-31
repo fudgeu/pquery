@@ -7,12 +7,12 @@ import dev.fudgeu.pquery.resolvables.comparison.ComparisonOperatorConstructor
 import dev.fudgeu.pquery.resolvables.logical.LogicalOperatorConstructor
 import dev.fudgeu.pquery.resolvables.math.MathOperatorConstructor
 
-class Plugin(
+open class Plugin(
     val name: String,
-    private val logicalOperators: Map<String, LogicalOperatorConstructor>,
-    private val comparisonOperators: Map<String, ComparisonOperatorConstructor>,
-    private val mathOperators: Map<String, MathOperatorConstructor>,
-    variables: Map<String, PluginPath>,
+    private val logicalOperators: Map<String, LogicalOperatorConstructor> = emptyMap(),
+    private val comparisonOperators: Map<String, ComparisonOperatorConstructor> = emptyMap(),
+    private val mathOperators: Map<String, MathOperatorConstructor> = emptyMap(),
+    variables: Map<String, PluginPath> = emptyMap(),
 ) {
     private val variableTypes: Map<String, ResolvableType>
     private val booleanVars: Map<String, BooleanResolvable>

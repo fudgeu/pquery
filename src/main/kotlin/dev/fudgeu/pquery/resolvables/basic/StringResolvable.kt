@@ -7,5 +7,11 @@ interface StringResolvable: Resolvable<String> {
                 override fun resolve(): String = value
             }
         }
+
+        fun of(value: () -> String): StringResolvable {
+            return object : StringResolvable {
+                override fun resolve(): String = value()
+            }
+        }
     }
 }

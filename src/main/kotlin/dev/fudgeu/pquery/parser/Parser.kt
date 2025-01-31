@@ -20,9 +20,7 @@ class Parser(
     private var index = 0;
 
     fun parse(): Result<Resolvable<Boolean>> {
-        workingQuery.forEach { println(it.token) }
         collapseLists()
-        workingQuery.forEach { println(it.token) }
         val resolvableResult = parseExpression()
             .onFailure { return Result.failure(it) }
             .getOrThrow()
